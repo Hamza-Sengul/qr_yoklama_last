@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenci Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .video-container {
+            max-width: 100%;
+            height: auto;
+            overflow: hidden;
+        }
+
+        #video {
+            width: 100%;
+            border: 2px solid #ddd;
+        }
+
+        #qr-result {
+            color: green;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">LESSQR</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Profil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="{% url 'logout' %}">Çıkış Yap</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Welcome Section -->
+    <div class="container mt-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-center">Hoş geldiniz, {{ user.first_name }} {{ user.last_name }}</h5>
+                <p class="card-text"><strong>E-posta:</strong> {{ user.email }}</p>
+                <p class="card-text"><strong>Okul Numarası:</strong> {{ user.profile.student_no }}</p>
+                <p class="card-text"><strong>Bölüm:</strong> {{ user.profile.department }}</p>
+                <p class="card-text"><strong>Sınıf:</strong> {{ user.profile.student_class }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Section -->
+    <div class="container mt-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-center">QR Kod Tarayıcı</h5>
+                <div class="video-container">
+                    <video id="video" autoplay></video>
+                </div>
+                <textarea id="qr-box" class="form-control mt-3" rows="3" placeholder="QR Kod İçeriği" disabled></textarea>
+                <button id="start-camera" class="btn btn-primary mt-3 w-100">Kamerayı Aç</button>
+                <p id="qr-result" class="mt-3 text-success text-center">Sonuç burada görüntülenecek.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white text-center text-muted mt-4 py-3 shadow-sm">
+        <p class="mb-0">© 2024 LESSQR | Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const startCamera = document.getElementById('start-camera');
+        const video = document.getElementById('video');
+        const qrBox = document.getElementById('qr-box');
+        const qrResult = document.getElementById('qr-result');
+
+        let scanning = false;
+
+        startCamera.addEventListener('click', async () => {
+            qrResult.textContent = '';
+            qrResult.style.display = 'none';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                video.play();
+                scanning = true;
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+
+                function scanQRCode() {
+                    if (!scanning) return;
+
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+
+                    if (canvas.width === 0 || canvas.height === 0) {
+                        requestAnimationFrame(scanQRCode);
+                        return;
+                    }
+
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
+
+                    if (qrCode) {
+                        qrBox.value = qrCode.data; // QR kod içeriğini göster
+                        scanning = false;
+                        video.srcObject.getTracks().forEach(track => track.stop());
+                        video.style.display = 'none';
+                        sendQRCodeData(qrCode.data);
+                    } else {
+                        requestAnimationFrame(scanQRCode);
+                    }
+                }
+
+                requestAnimationFrame(scanQRCode);
+            } catch (err) {
+                alert('Kameraya erişim sağlanamadı: ' + err.message);
+            }
+        });
+
+        async function sendQRCodeData(data) {
+            const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+            const csrftoken = csrfTokenMeta ? csrfTokenMeta.content : null;
+
+            if (!csrftoken) {
+                alert('CSRF token bulunamadı. Lütfen sayfanın içinde {% csrf_token %} olduğundan emin olun.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/scan-qr-code/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ qr_content: data })
+                });
+
+                const result = await response.json();
+                alert(result.message);
+
+                if (result.status === 'success') {
+                    console.log('Yoklama Başarıyla Alındı.');
+                } else {
+                    console.log('Hata: ', result.message);
+                }
+            } catch (err) {
+                console.error('Sunucuya istek gönderilirken bir hata oluştu: ', err);
+            }
+        }
+    </script>
+</body>
+</html>

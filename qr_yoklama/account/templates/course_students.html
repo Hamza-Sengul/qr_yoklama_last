@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.name }} - Kayıtlı Öğrenciler</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .course-info {
+            margin-bottom: 20px;
+        }
+        .table-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .no-students {
+            background: #ffe4e1;
+            border: 1px solid #ff7f7f;
+            color: #d9534f;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <h1 class="text-center mb-4">{{ course.name }} - Kayıtlı Öğrenciler</h1>
+
+        <div class="course-info">
+            <p><strong>Ders Kodu:</strong> {{ course.code }}</p>
+            <p><strong>Bölüm:</strong> {{ course.department }}</p>
+            <p><strong>Haftanın Günü:</strong> {{ course.get_day_of_week_display }}</p>
+        </div>
+
+        <div class="table-container">
+            {% if students %}
+                <table class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th>E-posta</th>
+                            <th>Okul No</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            <tr>
+                                <td>{{ student.user.first_name }}</td>
+                                <td>{{ student.user.last_name }}</td>
+                                <td>{{ student.user.email }}</td>
+                                <td>{{ student.student_no }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-students text-center">
+                    Bu derse kayıtlı öğrenci yok.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
