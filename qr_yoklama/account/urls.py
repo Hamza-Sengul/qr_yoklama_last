@@ -19,4 +19,8 @@ urlpatterns = [
     path('qr-code/create/', views.create_qr_code, name='create_qr_code'),
     path('qr-code/validate/<int:qr_code_id>/', views.validate_qr_code, name='validate_qr_code'),
     path('scan-qr-code/', views.scan_qr_code, name='scan_qr_code'),
+    path('dashboard/attendance/', views.attendance_overview, name='attendance_overview'),
+    path('dashboard/attendance/<str:course_name>/<int:week>/', views.attendance_details, name='attendance_details'),
+    path('dashboard/attendance/<str:course_name>/<int:week>/download/', views.download_attendance_pdf, name='download_attendance_pdf')
+
 ]
