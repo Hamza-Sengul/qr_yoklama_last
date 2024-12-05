@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 import qrcode
 import io
 from django.http import HttpResponse
-from .models import QRCode, Attendance
+from .models import QRCode, Attendance, AttendanceStatus
 from django.utils.timezone import now
 from django.http import JsonResponse
 import json
@@ -261,27 +261,27 @@ def create_qr_code(request):
         course_name = request.POST.get('course_name')
         course_code = request.POST.get('course_code')
         week = request.POST.get('week')
+        valid_minutes = request.POST.get('valid_minutes', 3)  # Varsayılan süre 3 dakika
 
-        # Eksik bilgi kontrolü
         if not all([course_name, course_code, week]):
             messages.error(request, 'Lütfen tüm alanları doldurun!')
             return redirect('create_qr_code')
 
-        # QR kod içeriğini birleştir
-        qr_content = f"{course_name},{course_code},{week}"
+        valid_until = now() + timedelta(minutes=int(valid_minutes))  # Geçerlilik süresi hesaplama
 
-        # QR kod oluştur
-        qr_image = qrcode.make(qr_content)
-        buffer = io.BytesIO()
-        qr_image.save(buffer)
-        buffer.seek(0)
+        qr_code = QRCode.objects.create(
+            course_name=course_name,
+            course_code=course_code,
+            week=week,
+            valid_until=valid_until,
+            generated_by=request.user
+        )
 
-        # QR kodu ekranda göster
-        response = HttpResponse(buffer, content_type='image/png')
-        response['Content-Disposition'] = 'inline; filename=qr_code.png'
-        return response
+        # Detay sayfasına yönlendir
+        return redirect('qr_code_detail', qr_code_id=qr_code.id)
 
     return render(request, 'create_qr_code.html')
+
 
 @login_required
 def validate_qr_code(request, qr_code_id):
@@ -329,6 +329,17 @@ def scan_qr_code(request):
                     course=course,
                     week=week
                 )
+
+                # AttendanceStatus güncelle veya oluştur
+                profile = Profile.objects.get(user=request.user)
+                attendance_status, created = AttendanceStatus.objects.get_or_create(
+                    course=course,
+                    week=week,
+                    student=profile
+                )
+                attendance_status.is_present = True
+                attendance_status.save()
+
                 return JsonResponse({'status': 'success', 'message': f"Yoklama başarıyla alındı ({course.name}, Week {week})."})
             except Exception as e:
                 print(f"Hata: {e}")
@@ -339,6 +350,7 @@ def scan_qr_code(request):
             return JsonResponse({'status': 'error', 'message': 'Sunucu tarafında bir hata oluştu.'})
 
     return JsonResponse({'status': 'error', 'message': 'Geçersiz istek.'})
+
 
 
 
@@ -358,18 +370,34 @@ def attendance_overview(request):
 @login_required
 def attendance_details(request, course_name, week):
     """
-    Belirli bir ders ve hafta için yoklama alan öğrencileri listele.
+    Belirli bir ders ve hafta için tüm öğrencilerin yoklama durumunu listele.
     """
     course = get_object_or_404(Course, name=course_name, created_by=request.user)
-    attendance_records = Attendance.objects.filter(course=course, week=week)
+    registered_students = course.students.all()
+    
+    # Tüm öğrencilerin yoklama durumlarını al
+    attendance_statuses = AttendanceStatus.objects.filter(course=course, week=week)
+
+    student_attendance = []
+    for student in registered_students:
+        status = attendance_statuses.filter(student=student).first()
+        student_attendance.append({
+            'first_name': student.user.first_name,
+            'last_name': student.user.last_name,
+            'student_no': student.student_no,
+            'is_present': status.is_present if status else False,  # Varsayılan False
+        })
+
     return render(request, 'attendance_details.html', {
         'course': course,
         'week': week,
-        'attendance_records': attendance_records  # Değişken adını eşleştirdik
+        'student_attendance': student_attendance
     })
 
+
+
 from django.conf import settings
-# FreeSans.ttf gibi Türkçe karakter destekleyen bir yazı tipi yükleyin
+
 pdfmetrics.registerFont(TTFont('FreeSans', 'static/fonts/FreeSans.ttf'))
 
 @login_required
@@ -378,25 +406,30 @@ def download_attendance_pdf(request, course_name, week):
     PDF olarak yoklama listesini indir.
     """
     course = get_object_or_404(Course, name=course_name, created_by=request.user)
-    attendances = Attendance.objects.filter(course=course, week=week)
+    registered_students = course.students.all()
+
+    # Tüm öğrencilerin mevcut durumunu alın
+    attendance_statuses = AttendanceStatus.objects.filter(course=course, week=week)
 
     buffer = BytesIO()
     pdf = SimpleDocTemplate(buffer, pagesize=A4)
 
     # PDF başlığı ve tablosu için veriler
     title = f"{course.name} - Hafta {week} Yoklama Listesi"
-    data = [["Ad", "Soyad", "Okul No", "Tarih"]]
+    data = [["Ad", "Soyad", "Okul No", "Durum"]]
 
-    for record in attendances:
+    for student in registered_students:
+        status = attendance_statuses.filter(student=student).first()
+        is_present = "Mevcut" if status and status.is_present else "Mevcut Değil"
         data.append([
-            record.student.first_name,
-            record.student.last_name,
-            record.student.profile.student_no,
-            record.scanned_at.strftime("%d/%m/%Y %H:%M")
+            student.user.first_name,
+            student.user.last_name,
+            student.student_no,
+            is_present
         ])
 
     # Tablo stili ve düzeni
-    table = Table(data, colWidths=[100, 100, 100, 150])
+    table = Table(data, colWidths=[100, 100, 100, 100])
     table.setStyle(TableStyle([
         ('FONTNAME', (0, 0), (-1, -1), 'FreeSans'),  # Türkçe karakter desteği için
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -425,3 +458,57 @@ def download_attendance_pdf(request, course_name, week):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+
+@login_required
+def finalize_attendance(request, qr_code_id):
+    """
+    Yoklamayı sonlandır ve tüm öğrenciler için mevcut/mevcut değil durumunu güncelle.
+    """
+    qr_code = get_object_or_404(QRCode, id=qr_code_id, generated_by=request.user)
+
+    # QR kodu süresi dolmuş olarak işaretle
+    qr_code.is_expired = True
+    qr_code.save()
+
+    # QR kod bilgilerine göre ders ve öğrencileri al
+    course = get_object_or_404(Course, name=qr_code.course_name, code=qr_code.course_code)
+    registered_students = course.students.all()
+
+    # QR kodu okutan öğrencileri al
+    attended_students = Attendance.objects.filter(course=course, week=qr_code.week).values_list('student', flat=True)
+
+    # Tüm öğrenciler için mevcut/mevcut değil durumunu belirle ve kaydet
+    for student in registered_students:
+        attendance_status, created = AttendanceStatus.objects.get_or_create(
+            course=course,
+            week=qr_code.week,
+            student=student
+        )
+        # QR kodu okutanlar mevcut, diğerleri mevcut değil
+        attendance_status.is_present = student.user.id in attended_students
+        attendance_status.save()
+
+    messages.success(request, "Yoklama başarıyla sonlandırıldı ve tüm durumlar güncellendi!")
+    return redirect('academician_dashboard')
+
+
+@login_required
+def qr_code_detail(request, qr_code_id):
+    """
+    QR Kod detay sayfası.
+    """
+    qr_code = get_object_or_404(QRCode, id=qr_code_id, generated_by=request.user)
+    return render(request, 'qr_code_detail.html', {'qr_code': qr_code})
+
+def qr_code_image(request, qr_code_id):
+    qr_code = QRCode.objects.get(id=qr_code_id)
+    qr_content = f"{qr_code.course_name},{qr_code.course_code},{qr_code.week}"
+
+    qr_image = qrcode.make(qr_content)
+    buffer = io.BytesIO()
+    qr_image.save(buffer)
+    buffer.seek(0)
+
+    return HttpResponse(buffer, content_type='image/png')
