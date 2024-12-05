@@ -42,10 +42,9 @@ class Course(models.Model):
         return f"{self.name} ({self.code})"
 
 
+from django.utils.timezone import now, timedelta
+
 class QRCode(models.Model):
-    """
-    QR Kod modeli.
-    """
     course_name = models.CharField(max_length=255)  # Ders adı
     course_code = models.CharField(max_length=50)  # Ders kodu
     week = models.PositiveIntegerField()  # Hafta bilgisi
@@ -54,16 +53,23 @@ class QRCode(models.Model):
     is_expired = models.BooleanField(default=False)  # Süre doldu mu?
     generated_by = models.ForeignKey(User, on_delete=models.CASCADE)  # QR kodu oluşturan akademisyen
 
+    def check_expiration(self):
+        """Süresinin dolup dolmadığını kontrol et."""
+        if not self.is_expired and now() > self.valid_until:
+            self.is_expired = True
+            self.save()
+
     def save(self, *args, **kwargs):
-        """
-        QR kodun geçerlilik süresini otomatik hesapla.
-        """
-        if not self.valid_until:
-            self.valid_until = now() + timedelta(minutes=3)  # 3 dakika geçerli
+        """Save sırasında süresi dolduysa güncelle."""
+        self.check_expiration()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.course_name} - {self.course_code} (Hafta: {self.week})"   
+        return f"{self.course_name} - {self.course_code} (Hafta: {self.week})"
+
+
+
+
 
 class Attendance(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -80,4 +86,17 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.course.name} (Week {self.week})"
+
+
+class AttendanceStatus(models.Model):
+    """
+    Öğrencilerin yoklama durumunu saklayan model.
+    """
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)  # Ders
+    week = models.PositiveIntegerField()  # Hafta
+    student = models.ForeignKey('Profile', on_delete=models.CASCADE)  # Öğrenci
+    is_present = models.BooleanField(default=False)  # Katılım durumu
+
+    class Meta:
+        unique_together = ('course', 'week', 'student')  # Aynı ders, hafta ve öğrenci için tek kayıt
 
