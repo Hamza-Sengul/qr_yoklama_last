@@ -14,17 +14,23 @@
                 <tr>
                     <th>Ad</th>
                     <th>Soyad</th>
-                    <th>Okul No</th> <!-- Yeni sütun -->
-                    <th>Tarih</th>
+                    <th>Okul No</th>
+                    <th>Durum</th> <!-- Mevcut/Mevcut Değil Sütunu -->
                 </tr>
             </thead>
             <tbody>
-                {% for record in attendance_records %}
+                {% for student in student_attendance %}
                     <tr>
-                        <td>{{ record.student.first_name }}</td>
-                        <td>{{ record.student.last_name }}</td>
-                        <td>{{ record.student.profile.student_no }}</td> <!-- Okul No -->
-                        <td>{{ record.scanned_at|date:"d/m/Y H:i" }}</td>
+                        <td>{{ student.first_name }}</td>
+                        <td>{{ student.last_name }}</td>
+                        <td>{{ student.student_no }}</td>
+                        <td>
+                            {% if student.is_present %}
+                                <span class="badge bg-success">Mevcut</span>
+                            {% else %}
+                                <span class="badge bg-danger">Mevcut Değil</span>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
