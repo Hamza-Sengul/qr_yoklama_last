@@ -21,6 +21,8 @@ urlpatterns = [
     path('scan-qr-code/', views.scan_qr_code, name='scan_qr_code'),
     path('dashboard/attendance/', views.attendance_overview, name='attendance_overview'),
     path('dashboard/attendance/<str:course_name>/<int:week>/', views.attendance_details, name='attendance_details'),
-    path('dashboard/attendance/<str:course_name>/<int:week>/download/', views.download_attendance_pdf, name='download_attendance_pdf')
-
+    path('dashboard/attendance/<str:course_name>/<int:week>/download/', views.download_attendance_pdf, name='download_attendance_pdf'),
+    path('qr-code/<int:qr_code_id>/detail/', views.qr_code_detail, name='qr_code_detail'),
+    path('qr-code/<int:qr_code_id>/finalize/', views.finalize_attendance, name='finalize_attendance'),
+    path('qr-code/<int:qr_code_id>/image/', views.qr_code_image, name='qr_code_image'),
 ]
