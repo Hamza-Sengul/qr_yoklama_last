@@ -574,8 +574,8 @@ from django.contrib.auth.views import PasswordResetView
 from django.conf import settings
 
 class CustomPasswordResetView(PasswordResetView):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['domain'] = 'tarsusuniversitesiqryoklama.online'  # Elle ayarlanan domain
-        context['protocol'] = 'https'  # HTTPS protokolü
+    def get_email_context(self):
+        context = super().get_email_context()
+        context['domain'] = settings.DEFAULT_DOMAIN
+        context['protocol'] = settings.DEFAULT_PROTOCOL
         return context
