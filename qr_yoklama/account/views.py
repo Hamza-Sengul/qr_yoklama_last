@@ -624,3 +624,4 @@ def custom_password_reset(request):
     # Şifre sıfırlama formunu göster
     return render(request, 'password_reset.html')
 
+
