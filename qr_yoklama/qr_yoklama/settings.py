@@ -38,9 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
 ]
-SITE_ID = 1
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -132,9 +131,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'tauyapayzekavedijitaldonusum@gmail.com'
 EMAIL_HOST_PASSWORD = 'kajx ezmt nduj qhub'
 DEFAULT_FROM_EMAIL = 'no-reply@tarsusuniversitesiqryoklama.online'
-SERVER_EMAIL = 'no-reply@tarsusuniversitesiqryoklama.online'
 
-SITE_URL = 'https://tarsusuniversitesiqryoklama.online'
 
-DEFAULT_DOMAIN = 'tarsusuniversitesiqryoklama.online'
-DEFAULT_PROTOCOL = 'https'
