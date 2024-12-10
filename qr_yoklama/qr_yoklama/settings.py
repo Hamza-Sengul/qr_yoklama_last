@@ -133,3 +133,5 @@ EMAIL_HOST_USER = 'tauyapayzekavedijitaldonusum@gmail.com'
 EMAIL_HOST_PASSWORD = 'kajx ezmt nduj qhub'
 DEFAULT_FROM_EMAIL = 'no-reply@tarsusuniversitesiqryoklama.online'
 SERVER_EMAIL = 'no-reply@tarsusuniversitesiqryoklama.online'
+
+SITE_URL = 'https://tarsusuniversitesiqryoklama.online'
