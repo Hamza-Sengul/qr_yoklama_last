@@ -575,6 +575,7 @@ from django.conf import settings
 
 class CustomPasswordResetView(PasswordResetView):
     def get_email_context(self):
-        context = super().get_email_context()
-        context['domain'] = settings.SITE_URL  # Domaini ekle
+        context = super().get_context_data()
+        context['domain'] = settings.DEFAULT_DOMAIN
+        context['protocol'] = settings.DEFAULT_PROTOCOL
         return context
