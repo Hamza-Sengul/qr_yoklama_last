@@ -570,16 +570,43 @@ def qr_code_image(request, qr_code_id):
     return HttpResponse(buffer, content_type='image/png')
 
 
-from django.contrib.auth.views import PasswordResetView
-from django.conf import settings
+from django.shortcuts import render, redirect
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib import messages
 
-class CustomPasswordResetView(PasswordResetView):
-    template_name = 'password_reset.html'  # Kullanıcı formu için
-    email_template_name = 'password_reset_email.html'  # E-posta için şablon
-    subject_template_name = 'password_reset_subject.txt'  # E-posta konusu için şablon
+def custom_password_reset(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            domain = 'tarsusuniversitesiqryoklama.online'
+            protocol = 'https'
 
-    def get_email_context(self):
-        context = super().get_email_context()
-        context['domain'] = settings.DEFAULT_DOMAIN
-        context['protocol'] = settings.DEFAULT_PROTOCOL
-        return context
+            # E-posta içeriği için HTML şablonunu kullan
+            subject = 'Şifre Sıfırlama Talebi'
+            html_content = render_to_string('emails/password_reset_email.html', {
+                'protocol': protocol,
+                'domain': domain,
+                'uid': uid,
+                'token': token,
+            })
+
+            # E-posta gönderimi
+            email_message = EmailMultiAlternatives(subject, '', 'no-reply@tarsusuniversitesiqryoklama.online', [email])
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send()
+
+            messages.success(request, 'Şifre sıfırlama talebiniz gönderildi. Lütfen e-postanızı kontrol edin.')
+            return redirect('password_reset_done')
+
+        except User.DoesNotExist:
+            messages.error(request, 'Bu e-posta adresiyle kayıtlı bir kullanıcı bulunamadı.')
+
+    return render(request, 'password_reset.html')
