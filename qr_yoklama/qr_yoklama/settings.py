@@ -135,3 +135,6 @@ DEFAULT_FROM_EMAIL = 'no-reply@tarsusuniversitesiqryoklama.online'
 SERVER_EMAIL = 'no-reply@tarsusuniversitesiqryoklama.online'
 
 SITE_URL = 'https://tarsusuniversitesiqryoklama.online'
+
+DEFAULT_DOMAIN = 'tarsusuniversitesiqryoklama.online'
+DEFAULT_PROTOCOL = 'https'
