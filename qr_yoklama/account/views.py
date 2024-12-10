@@ -574,6 +574,10 @@ from django.contrib.auth.views import PasswordResetView
 from django.conf import settings
 
 class CustomPasswordResetView(PasswordResetView):
+    template_name = 'password_reset.html'  # Kullanıcı formu için
+    email_template_name = 'password_reset_email.html'  # E-posta için şablon
+    subject_template_name = 'password_reset_subject.txt'  # E-posta konusu için şablon
+
     def get_email_context(self):
         context = super().get_email_context()
         context['domain'] = settings.DEFAULT_DOMAIN
