@@ -44,6 +44,9 @@
                         <a class="nav-link" href="#">Profil</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'attendance_logs' %}">Geçmiş Yoklamalarım</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link text-danger" href="{% url 'logout' %}">Çıkış Yap</a>
                     </li>
                 </ul>
@@ -78,6 +81,46 @@
             </div>
         </div>
     </div>
+
+<!--  -->
+    <section>
+        <div class="container mt-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Dersler ve Devamsızlık Durumu</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Ders Adı</th>
+                                    <th>Ders Kodu</th>
+                                    <th>Toplam Hafta</th>
+                                    <th>Devamsızlık Hakkı</th>
+                                    <th>Devamsızlık Sayısı</th>
+                                    <th>Kalan Hakkı</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in attendance_data %}
+                                <tr>
+                                    <td><a href="{% url 'student_course_details' course_id=data.course_id %}">{{ data.course_name }}</a></td>
+                                    <td>{{ data.course_code }}</td>
+                                    <td>{{ data.total_weeks }}</td>
+                                    <td>{{ data.attendance_limit }}</td>
+                                    <td>{{ data.absence_count }}</td>
+                                    <td>{{ data.remaining_attendance }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>        
+    </section>
+
+<!-- end -->
 
     <!-- Footer -->
     <footer class="bg-white text-center text-muted mt-4 py-3 shadow-sm">
