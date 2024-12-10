@@ -570,6 +570,7 @@ def qr_code_image(request, qr_code_id):
     return HttpResponse(buffer, content_type='image/png')
 
 
+import logging
 from django.shortcuts import render, redirect
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -578,6 +579,9 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib import messages
+
+# Logger oluştur
+logger = logging.getLogger(__name__)
 
 def custom_password_reset(request):
     if request.method == 'POST':
@@ -595,23 +599,31 @@ def custom_password_reset(request):
             protocol = 'https'
 
             # E-posta içeriğini oluştur
-            subject = 'Şifre Sıfırlama Talebi'.encode('utf-8').decode('utf-8')
-            html_content = render_to_string('emails/password_reset_email.html', {
-                'protocol': protocol,
-                'domain': domain,
-                'uid': uid,
-                'token': token,
-            }).encode('utf-8').decode('utf-8')  # Kodlama kontrolü
+            subject = 'Şifre Sıfırlama Talebi'
+            try:
+                html_content = render_to_string('emails/password_reset_email.html', {
+                    'protocol': protocol,
+                    'domain': domain,
+                    'uid': uid,
+                    'token': token,
+                })
+            except Exception as e:
+                logger.error("Şablon oluşturma hatası: %s", e)
+                raise
 
             # E-posta gönderimi
-            email_message = EmailMultiAlternatives(
-                subject=subject,
-                body='',  # Düz metin içeriği (HTML kullanıldığı için boş bırakılabilir)
-                from_email='no-reply@tarsusuniversitesiqryoklama.online',
-                to=[email]
-            )
-            email_message.attach_alternative(html_content, "text/html")
-            email_message.send()
+            try:
+                email_message = EmailMultiAlternatives(
+                    subject=subject,
+                    body='',  # Düz metin içeriği (HTML kullanıldığı için boş bırakılabilir)
+                    from_email='no-reply@tarsusuniversitesiqryoklama.online',
+                    to=[email]
+                )
+                email_message.attach_alternative(html_content, "text/html")
+                email_message.send()
+            except Exception as e:
+                logger.error("E-posta gönderim hatası: %s", e)
+                raise
 
             # Başarılı mesaj ve yönlendirme
             messages.success(request, 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.')
@@ -620,6 +632,10 @@ def custom_password_reset(request):
         except User.DoesNotExist:
             # Kullanıcı bulunamazsa hata mesajı
             messages.error(request, 'Bu e-posta adresiyle eşleşen bir kullanıcı bulunamadı.')
+
+    # Şifre sıfırlama formunu göster
+    return render(request, 'password_reset.html')
+
 
     # Şifre sıfırlama formunu göster
     return render(request, 'password_reset.html')
