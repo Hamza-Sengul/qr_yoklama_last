@@ -568,3 +568,13 @@ def qr_code_image(request, qr_code_id):
     buffer.seek(0)
 
     return HttpResponse(buffer, content_type='image/png')
+
+
+from django.contrib.auth.views import PasswordResetView
+from django.conf import settings
+
+class CustomPasswordResetView(PasswordResetView):
+    def get_email_context(self):
+        context = super().get_email_context()
+        context['domain'] = settings.SITE_URL  # Domaini ekle
+        return context
