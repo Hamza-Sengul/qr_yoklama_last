@@ -583,30 +583,44 @@ def custom_password_reset(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         try:
+            # Kullanıcıyı e-posta adresine göre al
             user = User.objects.get(email=email)
+
+            # Token ve UID oluştur
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            # E-posta bağlantısı için ayarlar
             domain = 'tarsusuniversitesiqryoklama.online'
             protocol = 'https'
 
-            # E-posta içeriği için HTML şablonunu kullan
-            subject = 'Şifre Sıfırlama Talebi'
+            # E-posta içeriğini oluştur
+            subject = 'Şifre Sıfırlama Talebi'.encode('utf-8').decode('utf-8')
             html_content = render_to_string('emails/password_reset_email.html', {
                 'protocol': protocol,
                 'domain': domain,
                 'uid': uid,
                 'token': token,
-            })
+            }).encode('utf-8').decode('utf-8')  # Kodlama kontrolü
 
             # E-posta gönderimi
-            email_message = EmailMultiAlternatives(subject, '', 'no-reply@tarsusuniversitesiqryoklama.online', [email])
+            email_message = EmailMultiAlternatives(
+                subject=subject,
+                body='',  # Düz metin içeriği (HTML kullanıldığı için boş bırakılabilir)
+                from_email='no-reply@tarsusuniversitesiqryoklama.online',
+                to=[email]
+            )
             email_message.attach_alternative(html_content, "text/html")
             email_message.send()
 
-            messages.success(request, 'Şifre sıfırlama talebiniz gönderildi. Lütfen e-postanızı kontrol edin.')
+            # Başarılı mesaj ve yönlendirme
+            messages.success(request, 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.')
             return redirect('password_reset_done')
 
         except User.DoesNotExist:
-            messages.error(request, 'Bu e-posta adresiyle kayıtlı bir kullanıcı bulunamadı.')
+            # Kullanıcı bulunamazsa hata mesajı
+            messages.error(request, 'Bu e-posta adresiyle eşleşen bir kullanıcı bulunamadı.')
 
+    # Şifre sıfırlama formunu göster
     return render(request, 'password_reset.html')
+
