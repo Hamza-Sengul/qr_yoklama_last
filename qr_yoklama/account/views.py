@@ -88,14 +88,70 @@ def user_logout(request):
     logout(request)
     return redirect('home')
 
+
 @login_required
 def student_dashboard(request):
-    """
-    Giriş yapmış öğrencilere özel öğrenci paneli.
-    """
-    return render(request, 'student_dashboard.html', {'user': request.user})
+    user_profile = request.user.profile
+    courses = Course.objects.filter(students=user_profile)
+    attendance_data = []
 
+    for course in courses:
+        total_weeks = course.weeks
+        attendance_limit = course.attendance_limit
+        absences = AttendanceStatus.objects.filter(
+            course=course,
+            student=user_profile,
+            is_present=False
+        ).count()
+        remaining_attendance = max(attendance_limit - absences, 0)
 
+        # course_id'yi ekliyoruz
+        attendance_data.append({
+            'course_name': course.name,
+            'course_code': course.code,
+            'course_id': course.id,  # Bu satır önemli
+            'total_weeks': total_weeks,
+            'attendance_limit': attendance_limit,
+            'absence_count': absences,
+            'remaining_attendance': remaining_attendance
+        })
+
+    return render(request, 'student_dashboard.html', {
+        'user': request.user,
+        'attendance_data': attendance_data
+    })
+
+@login_required
+def student_course_details(request, course_id):
+    user_profile = request.user.profile
+    try:
+        course = Course.objects.get(id=course_id, students=user_profile)
+    except Course.DoesNotExist:
+        return render(request, '404.html', status=404)  # Hatalı erişim için
+
+    absences = AttendanceStatus.objects.filter(
+        course=course,
+        student=user_profile,
+        is_present=False
+    ).count()
+
+    return render(request, 'student_course_details.html', {
+        'user': request.user,
+        'course': course,
+        'total_weeks': course.weeks,
+        'attendance_limit': course.attendance_limit,
+        'absence_count': absences,
+        'remaining_attendance': max(course.attendance_limit - absences, 0),
+    })
+
+@login_required
+def attendance_logs(request):
+    logs = Attendance.objects.filter(student=request.user).order_by('-scanned_at')
+
+    return render(request, 'attendance_logs.html', {
+        'user': request.user,
+        'logs': logs,
+    })
 
 def academician_login(request):
     """
