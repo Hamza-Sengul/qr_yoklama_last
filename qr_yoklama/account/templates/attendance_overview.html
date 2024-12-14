@@ -17,17 +17,22 @@
                     <th>Detaylar</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for data in attendance_data %}
-                <tr>
-                    <td>{{ data.course__name }}</td>
-                    <td>Hafta {{ data.week }}</td>
-                    <td>
-                        <a href="{% url 'attendance_details' data.course__name data.week %}" class="btn btn-info btn-sm">Detaylar</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
+           <tbody>
+    {% for data in attendance_data %}
+    <tr>
+        <td>{{ data.course__name }}</td>
+        <td>Hafta {{ data.week }}</td>
+        <td>
+            <a href="{% url 'attendance_details' data.course__name data.week %}" class="btn btn-info btn-sm">Detaylar</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="3" class="text-center">Henüz yoklama kaydı bulunmamaktadır.</td>
+    </tr>
+    {% endfor %}
+</tbody>
+
         </table>
     </div>
 </body>
