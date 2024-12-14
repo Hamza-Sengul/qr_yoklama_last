@@ -695,19 +695,33 @@ def custom_password_reset(request):
 
 
 
-def validate_qr_and_redirect(request, qr_code_id):
-    try:
-        qr_code = QRCode.objects.get(id=qr_code_id)
-        
-        # Eğer kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
-        if not request.user.is_authenticated:
-            # Giriş sonrası yoklama kaydını oluşturmak için next parametresini ayarlayın
-            request.session['qr_code_id'] = qr_code_id
-            return redirect('student_login')  # Giriş sayfasına yönlendir
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login
+from django.contrib import messages
 
-        # Kullanıcı giriş yapmışsa yoklama kaydını oluştur
-        return handle_attendance_after_login(request, qr_code)
-    
+def validate_qr_and_redirect(request, qr_code_id):
+    """
+    QR kodu doğrulayıp kullanıcıyı yönlendirir.
+    """
+    try:
+        # QR kodunu bul
+        qr_code = QRCode.objects.get(id=qr_code_id)
+
+        # Kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
+        if not request.user.is_authenticated:
+            request.session['qr_code_id'] = qr_code_id  # QR kod bilgisini sakla
+            return redirect('student_login')
+
+        # Kullanıcı giriş yapmışsa yoklamayı kaydet
+        handle_attendance_after_login(request, qr_code)
+        messages.success(request, 'Yoklama başarıyla alındı!')
+        return redirect('student_dashboard')  # Öğrenci paneline yönlendir
+
     except QRCode.DoesNotExist:
-        return render(request, 'invalid_qr.html', status=400)
+        # QR kod bulunamazsa hata sayfasına yönlendir
+        return render(request, 'invalid_qr.html', {'error': 'Geçersiz QR kod.'}, status=404)
+
+    # Herhangi bir durumda görünüm sona eriyorsa hata döndürmeyin
+    return render(request, 'invalid_qr.html', {'error': 'Beklenmeyen bir durum oluştu.'}, status=400)
+
 
