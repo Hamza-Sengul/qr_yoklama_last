@@ -312,6 +312,8 @@ def course_list(request):
     courses = Course.objects.filter(created_by=request.user)
     return render(request, 'course_list.html', {'courses': courses})
 
+from collections import defaultdict
+
 @login_required
 def add_students_to_course(request, course_id):
     """
@@ -319,6 +321,11 @@ def add_students_to_course(request, course_id):
     """
     course = Course.objects.get(id=course_id, created_by=request.user)
     students = Profile.objects.all()
+
+    # Öğrencileri bölüm ve sınıf olarak gruplandır
+    grouped_students = defaultdict(lambda: defaultdict(list))
+    for student in students:
+        grouped_students[student.department][student.student_class].append(student)
 
     if request.method == 'POST':
         selected_students = request.POST.getlist('students')
@@ -329,7 +336,10 @@ def add_students_to_course(request, course_id):
         messages.success(request, 'Öğrenciler başarıyla eklendi!')
         return redirect('course_list')
 
-    return render(request, 'add_students_to_course.html', {'course': course, 'students': students})
+    return render(request, 'add_students_to_course.html', {
+        'course': course,
+        'grouped_students': grouped_students
+    })
 
 @login_required
 def profile_settings(request):
