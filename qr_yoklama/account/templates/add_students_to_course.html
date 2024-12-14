@@ -44,40 +44,39 @@
         <form method="post">
             {% csrf_token %}
             {% if grouped_students %}
-    {% for department, classes in grouped_students.items %}
-    <h4 class="mt-4">{{ department }}</h4>
-    <div class="table-container">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Sınıf</th>
-                    <th>Ad Soyad</th>
-                    <th>Okul No</th>
-                    <th>Seç</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for student_class, students in classes.items %}
-                <tr>
-                    <td rowspan="{{ students|length }}">{{ student_class }}. Sınıf</td>
-                    {% for student in students %}
-                    <td>{{ student.user.first_name }} {{ student.user.last_name }}</td>
-                    <td>{{ student.student_no }}</td>
-                    <td>
-                        <input class="form-check-input student-checkbox" type="checkbox" name="students" value="{{ student.id }}" id="student-{{ student.id }}">
-                    </td>
-                    </tr>
-                    <tr>
-                    {% endfor %}
+                {% for department, classes in grouped_students.items %}
+                <h4 class="mt-4">{{ department }}</h4>
+                <div class="table-container">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Sınıf</th>
+                                <th>Ad Soyad</th>
+                                <th>Okul No</th>
+                                <th>Seç</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student_class, students in classes.items %}
+                            <tr>
+                                <td rowspan="{{ students|length }}">{{ student_class }}. Sınıf</td>
+                                {% for student in students %}
+                                <td>{{ student.user.first_name }} {{ student.user.last_name }}</td>
+                                <td>{{ student.student_no }}</td>
+                                <td>
+                                    <input class="form-check-input student-checkbox" type="checkbox" name="students" value="{{ student.id }}" id="student-{{ student.id }}">
+                                </td>
+                                </tr>
+                                <tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endfor %}
-{% else %}
-    <p>Hiç öğrenci bulunamadı.</p>
-{% endif %}
-
+            {% else %}
+                <p>Hiç öğrenci bulunamadı.</p>
+            {% endif %}
             <button type="submit" class="btn btn-primary mt-3">Öğrenci Ekle</button>
         </form>
     </div>
