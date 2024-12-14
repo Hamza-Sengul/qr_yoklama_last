@@ -459,9 +459,10 @@ def attendance_overview(request):
     courses = Course.objects.filter(created_by=request.user)
     attendance_data = Attendance.objects.filter(course__in=courses).values(
         'course__name', 'week'
-    ).distinct()
-    
+    ).annotate(total_students=models.Count('id'))
+
     return render(request, 'attendance_overview.html', {'attendance_data': attendance_data})
+
 
 
 @login_required
@@ -471,7 +472,7 @@ def attendance_details(request, course_name, week):
     """
     course = get_object_or_404(Course, name=course_name, created_by=request.user)
     registered_students = course.students.all()
-    
+
     # Tüm öğrencilerin yoklama durumlarını al
     attendance_statuses = AttendanceStatus.objects.filter(course=course, week=week)
 
