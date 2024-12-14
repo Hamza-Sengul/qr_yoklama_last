@@ -45,7 +45,6 @@ class Course(models.Model):
 from django.utils.timezone import now, timedelta
 
 class QRCode(models.Model):
-    # Mevcut alanlar korunuyor
     course_name = models.CharField(max_length=255)
     course_code = models.CharField(max_length=50)
     week = models.PositiveIntegerField()
@@ -56,10 +55,16 @@ class QRCode(models.Model):
 
     def get_qr_content(self):
         """
-        QR kod içeriği olarak doğrulama URL'si döner.
+        QR kod içeriği olarak doğrulama URL'si ve ders bilgilerini döner.
         """
         domain = "https://tarsusuniversitesiqryoklama.online"
-        return f"{domain}/validate-qr/{self.id}"
+        return json.dumps({
+            "url": f"{domain}/validate-qr/{self.id}/",
+            "course_name": self.course_name,
+            "course_code": self.course_code,
+            "week": self.week
+        })
+
 
 
 
