@@ -18,26 +18,27 @@
                     <th>Durum</th> <!-- Mevcut/Mevcut Değil Sütunu -->
                 </tr>
             </thead>
-            <tbody>
-                {% for student in student_attendance %}
-                    <tr>
-                        <td>{{ student.first_name }}</td>
-                        <td>{{ student.last_name }}</td>
-                        <td>{{ student.student_no }}</td>
-                        <td>
-                            {% if student.is_present %}
-                                <span class="badge bg-success">Mevcut</span>
-                            {% else %}
-                                <span class="badge bg-danger">Mevcut Değil</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center">Yoklama kaydı bulunamadı.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
+           <tbody>
+    {% for student in student_attendance %}
+        <tr>
+            <td>{{ student.first_name }}</td>
+            <td>{{ student.last_name }}</td>
+            <td>{{ student.student_no }}</td>
+            <td>
+                {% if student.is_present %}
+                    <span class="badge bg-success">Mevcut</span>
+                {% else %}
+                    <span class="badge bg-danger">Mevcut Değil</span>
+                {% endif %}
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="4" class="text-center">Henüz yoklama kaydı bulunmamaktadır.</td>
+        </tr>
+    {% endfor %}
+</tbody>
+
         </table>
         <a href="{% url 'download_attendance_pdf' course.name week %}" class="btn btn-primary">PDF Olarak İndir</a>
     </div>
