@@ -27,14 +27,22 @@ from django.db import models
 
 def handle_attendance_after_login(request, qr_code):
     try:
+        # Ders ve öğrenci bilgilerini al
         course = Course.objects.get(name=qr_code.course_name, code=qr_code.course_code)
-        week = qr_code.week
         profile = Profile.objects.get(user=request.user)
+
+        # Yoklama kaydını oluştur
+        Attendance.objects.create(
+            student=request.user,
+            course=course,
+            week=qr_code.week,
+            scanned_at=now()
+        )
 
         # AttendanceStatus güncelle veya oluştur
         attendance_status, created = AttendanceStatus.objects.get_or_create(
             course=course,
-            week=week,
+            week=qr_code.week,
             student=profile
         )
         attendance_status.is_present = True
@@ -42,6 +50,7 @@ def handle_attendance_after_login(request, qr_code):
 
     except Exception as e:
         print(f"Hata: {e}")
+
 
 
 def home(request):
@@ -466,6 +475,7 @@ def attendance_overview(request):
 
 
 
+
 @login_required
 def attendance_details(request, course_name, week):
     """
@@ -685,18 +695,22 @@ def custom_password_reset(request):
 
 
 
+@login_required
 def validate_qr_and_redirect(request, qr_code_id):
+    """
+    QR kodu doğrulayıp kullanıcıyı yönlendirir.
+    """
     try:
         qr_code = QRCode.objects.get(id=qr_code_id)
-        
-        # Eğer kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
-        if not request.user.is_authenticated:
-            # Giriş sonrası yoklama kaydını oluşturmak için next parametresini ayarlayın
-            request.session['qr_code_id'] = qr_code_id
-            return redirect('student_login')  # Giriş sayfasına yönlendir
 
-        # Kullanıcı giriş yapmışsa yoklama kaydını oluştur
+        # Kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
+        if not request.user.is_authenticated:
+            request.session['qr_code_id'] = qr_code_id  # QR kod bilgisini sakla
+            return redirect('student_login')
+
+        # Kullanıcı giriş yapmışsa yoklamayı kaydet
         return handle_attendance_after_login(request, qr_code)
-    
+
     except QRCode.DoesNotExist:
         return render(request, 'invalid_qr.html', status=400)
+
