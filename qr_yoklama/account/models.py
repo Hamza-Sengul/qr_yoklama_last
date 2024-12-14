@@ -45,27 +45,22 @@ class Course(models.Model):
 from django.utils.timezone import now, timedelta
 
 class QRCode(models.Model):
-    course_name = models.CharField(max_length=255)  # Ders adı
-    course_code = models.CharField(max_length=50)  # Ders kodu
-    week = models.PositiveIntegerField()  # Hafta bilgisi
-    created_at = models.DateTimeField(auto_now_add=True)  # Oluşturulma zamanı
-    valid_until = models.DateTimeField()  # Geçerlilik süresi
-    is_expired = models.BooleanField(default=False)  # Süre doldu mu?
-    generated_by = models.ForeignKey(User, on_delete=models.CASCADE)  # QR kodu oluşturan akademisyen
+    # Mevcut alanlar korunuyor
+    course_name = models.CharField(max_length=255)
+    course_code = models.CharField(max_length=50)
+    week = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    valid_until = models.DateTimeField()
+    is_expired = models.BooleanField(default=False)
+    generated_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    def check_expiration(self):
-        """Süresinin dolup dolmadığını kontrol et."""
-        if not self.is_expired and now() > self.valid_until:
-            self.is_expired = True
-            self.save()
+    def get_qr_content(self):
+        """
+        QR kod içeriği olarak doğrulama URL'si döner.
+        """
+        domain = "https://tarsusuniversitesiqryoklama.online"
+        return f"{domain}/validate-qr/{self.id}"
 
-    def save(self, *args, **kwargs):
-        """Save sırasında süresi dolduysa güncelle."""
-        self.check_expiration()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.course_name} - {self.course_code} (Hafta: {self.week})"
 
 
 
@@ -99,4 +94,3 @@ class AttendanceStatus(models.Model):
 
     class Meta:
         unique_together = ('course', 'week', 'student')  # Aynı ders, hafta ve öğrenci için tek kayıt
-
