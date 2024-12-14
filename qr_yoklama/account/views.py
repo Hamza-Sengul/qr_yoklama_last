@@ -56,30 +56,37 @@ def handle_attendance_after_login(request, qr_code):
 def home(request):
     return render(request, 'home.html')
 
+from django.contrib import messages
+
 def student_login(request):
+    """
+    Öğrenci giriş işlemleri.
+    """
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
 
-        # Kullanıcı doğrulama
         user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
-            
-            # QR Kod üzerinden giriş yapıldıysa yoklama işlemini işleme al
+
+            # QR kod doğrulama ile gelen giriş işlemini kontrol et
             qr_code_id = request.session.pop('qr_code_id', None)
             if qr_code_id:
                 try:
                     qr_code = QRCode.objects.get(id=qr_code_id)
                     handle_attendance_after_login(request, qr_code)
                     messages.success(request, 'Yoklama başarıyla alındı!')
+                    return redirect('attendance_logs')  # Yoklama geçmişine yönlendir
                 except QRCode.DoesNotExist:
                     messages.error(request, 'Geçersiz QR kod.')
-            
-            return redirect('student_dashboard')  # Öğrenci paneline yönlendir
+                    return redirect('student_dashboard')
+
+            return redirect('student_dashboard')
         else:
             messages.error(request, 'E-posta veya şifre hatalı!')
     return render(request, 'student_login.html')
+
 
 def student_register(request):
     """
@@ -713,24 +720,20 @@ def validate_qr_and_redirect(request, qr_code_id):
     QR kodu doğrulayıp kullanıcıyı yönlendirir.
     """
     try:
-        # QR kodunu bul
         qr_code = QRCode.objects.get(id=qr_code_id)
 
         # Kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
         if not request.user.is_authenticated:
             request.session['qr_code_id'] = qr_code_id  # QR kod bilgisini sakla
-            return redirect('student_login')
+            return redirect('student_login')  # Giriş sayfasına yönlendir
 
         # Kullanıcı giriş yapmışsa yoklamayı kaydet
         handle_attendance_after_login(request, qr_code)
         messages.success(request, 'Yoklama başarıyla alındı!')
-        return redirect('student_dashboard')  # Öğrenci paneline yönlendir
+        return redirect('attendance_logs')  # Yoklama geçmişine yönlendir
 
     except QRCode.DoesNotExist:
-        # QR kod bulunamazsa hata sayfasına yönlendir
-        return render(request, 'invalid_qr.html', {'error': 'Geçersiz QR kod.'}, status=404)
+        return render(request, 'invalid_qr.html', status=400)
 
-    # Herhangi bir durumda görünüm sona eriyorsa hata döndürmeyin
-    return render(request, 'invalid_qr.html', {'error': 'Beklenmeyen bir durum oluştu.'}, status=400)
 
 
