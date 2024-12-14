@@ -337,34 +337,50 @@ def course_students(request, course_id):
 
 @login_required
 def create_qr_code(request):
+    """
+    QR kod oluşturma işlemi.
+    """
     if request.method == 'POST':
         course_name = request.POST.get('course_name')
         course_code = request.POST.get('course_code')
         week = request.POST.get('week')
         valid_minutes = request.POST.get('valid_minutes', 3)
 
+        # Eksik bilgi kontrolü
         if not all([course_name, course_code, week]):
             messages.error(request, 'Lütfen tüm alanları doldurun!')
             return redirect('create_qr_code')
 
-        valid_until = now() + timedelta(minutes=int(valid_minutes))
+        try:
+            # Geçerlilik süresi hesaplama
+            valid_until = now() + timedelta(minutes=int(valid_minutes))
 
-        qr_code = QRCode.objects.create(
-            course_name=course_name,
-            course_code=course_code,
-            week=week,
-            valid_until=valid_until,
-            generated_by=request.user
-        )
+            # QR kod oluşturma
+            qr_code = QRCode.objects.create(
+                course_name=course_name,
+                course_code=course_code,
+                week=week,
+                valid_until=valid_until,
+                generated_by=request.user
+            )
 
-        # QR kod içeriği oluşturuluyor
-        qr_content = qr_code.get_qr_content()
-        qr_image = qrcode.make(qr_content)
-        buffer = io.BytesIO()
-        qr_image.save(buffer)
-        buffer.seek(0)
+            # QR kod içeriğini oluştur
+            qr_content = qr_code.get_qr_content()
+            qr_image = qrcode.make(qr_content)
+            buffer = io.BytesIO()
+            qr_image.save(buffer)
+            buffer.seek(0)
 
-        return HttpResponse(buffer, content_type='image/png')
+            return HttpResponse(buffer, content_type='image/png')
+
+        except Exception as e:
+            # Hata mesajı
+            messages.error(request, f'QR kod oluşturulurken bir hata oluştu: {e}')
+            return redirect('create_qr_code')
+
+    # GET isteği durumunda formu render et
+    return render(request, 'create_qr_code.html')
+
 
 
 
