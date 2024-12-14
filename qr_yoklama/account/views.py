@@ -319,16 +319,14 @@ def add_students_to_course(request, course_id):
     """
     Ders için öğrenci ekleme işlemi.
     """
-    course = Course.objects.get(id=course_id, created_by=request.user)
+    course = get_object_or_404(Course, id=course_id, created_by=request.user)
 
-    # Öğrencileri gruplandır
+    # Öğrencileri bölüm ve sınıflara göre gruplandır
     grouped_students = defaultdict(lambda: defaultdict(list))
     students = Profile.objects.all()
+
     for student in students:
         grouped_students[student.department][student.student_class].append(student)
-
-    # Loglama: grouped_students içeriğini kontrol et
-    print(grouped_students)
 
     if request.method == 'POST':
         selected_students = request.POST.getlist('students')
@@ -343,7 +341,6 @@ def add_students_to_course(request, course_id):
         'course': course,
         'grouped_students': grouped_students
     })
-
 
 
 @login_required
