@@ -417,12 +417,26 @@ def scan_qr_code(request):
             if not qr_content:
                 return JsonResponse({'status': 'error', 'message': 'QR kod verisi eksik.'})
 
-            # QR kod içeriğini parçala
-            try:
-                course_name, course_code, week = qr_content.split(',')
-                week = int(week)
-            except ValueError:
-                return JsonResponse({'status': 'error', 'message': 'QR kod formatı geçersiz.'})
+            # QR kod içeriği bir URL mi kontrol et
+            if qr_content.startswith("http"):
+                # QR kod linkinden id'yi çıkar
+                qr_code_id = qr_content.split('/validate-qr/')[-1].strip('/')
+                qr_code = QRCode.objects.filter(id=qr_code_id).first()
+
+                if not qr_code:
+                    return JsonResponse({'status': 'error', 'message': 'Geçersiz QR kod. Kod sistemde bulunamadı.'})
+
+                # Ders bilgilerini QR kod modelinden al
+                course_name = qr_code.course_name
+                course_code = qr_code.course_code
+                week = qr_code.week
+            else:
+                # Eski düz metin formatını çözümle
+                try:
+                    course_name, course_code, week = qr_content.split(',')
+                    week = int(week)
+                except ValueError:
+                    return JsonResponse({'status': 'error', 'message': 'QR kod formatı geçersiz.'})
 
             # Ders kontrolü
             course = Course.objects.filter(name=course_name, code=course_code).first()
@@ -430,33 +444,28 @@ def scan_qr_code(request):
                 return JsonResponse({'status': 'error', 'message': 'Geçersiz QR kod. Ders bulunamadı.'})
 
             # Yoklama kaydını oluştur
-            try:
-                Attendance.objects.create(
-                    student=request.user,
-                    course=course,
-                    week=week
-                )
+            profile = Profile.objects.get(user=request.user)
+            Attendance.objects.create(
+                student=request.user,
+                course=course,
+                week=week
+            )
+            attendance_status, created = AttendanceStatus.objects.get_or_create(
+                course=course,
+                week=week,
+                student=profile
+            )
+            attendance_status.is_present = True
+            attendance_status.save()
 
-                # AttendanceStatus güncelle veya oluştur
-                profile = Profile.objects.get(user=request.user)
-                attendance_status, created = AttendanceStatus.objects.get_or_create(
-                    course=course,
-                    week=week,
-                    student=profile
-                )
-                attendance_status.is_present = True
-                attendance_status.save()
-
-                return JsonResponse({'status': 'success', 'message': f"Yoklama başarıyla alındı ({course.name}, Week {week})."})
-            except Exception as e:
-                print(f"Hata: {e}")
-                return JsonResponse({'status': 'error', 'message': 'Yoklama kaydedilirken bir hata oluştu.'})
+            return JsonResponse({'status': 'success', 'message': f"Yoklama başarıyla alındı ({course.name}, Hafta {week})."})
 
         except Exception as e:
             print(f"Hata: {e}")
             return JsonResponse({'status': 'error', 'message': 'Sunucu tarafında bir hata oluştu.'})
 
     return JsonResponse({'status': 'error', 'message': 'Geçersiz istek.'})
+
 
 
 
