@@ -364,17 +364,10 @@ def create_qr_code(request):
                 generated_by=request.user
             )
 
-            # QR kod içeriğini oluştur
-            qr_content = qr_code.get_qr_content()
-            qr_image = qrcode.make(qr_content)
-            buffer = io.BytesIO()
-            qr_image.save(buffer)
-            buffer.seek(0)
-
-            return HttpResponse(buffer, content_type='image/png')
+            # QR kod detay sayfasına yönlendir
+            return redirect('qr_code_detail', qr_code_id=qr_code.id)
 
         except Exception as e:
-            # Hata mesajı
             messages.error(request, f'QR kod oluşturulurken bir hata oluştu: {e}')
             return redirect('create_qr_code')
 
