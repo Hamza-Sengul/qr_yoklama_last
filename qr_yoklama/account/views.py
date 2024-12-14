@@ -321,12 +321,10 @@ def add_students_to_course(request, course_id):
     """
     course = get_object_or_404(Course, id=course_id, created_by=request.user)
 
-    # Öğrencileri bölüm ve sınıflara göre gruplandır
+    # Öğrencileri bölümler ve sınıflarına göre grupla
     grouped_students = defaultdict(lambda: defaultdict(list))
-    students = Profile.objects.all()
-
-    for student in students:
-        grouped_students[student.department][student.student_class].append(student)
+    for profile in Profile.objects.all():
+        grouped_students[profile.department][profile.student_class].append(profile)
 
     if request.method == 'POST':
         selected_students = request.POST.getlist('students')
