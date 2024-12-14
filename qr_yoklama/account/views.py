@@ -321,13 +321,14 @@ def add_students_to_course(request, course_id):
     """
     course = Course.objects.get(id=course_id, created_by=request.user)
 
-    # Öğrenci verilerini kontrol etmek için ekleyin
-    students = Profile.objects.all()
-    print(students)  # Öğrenci verilerini loglayın
-
+    # Öğrencileri gruplandır
     grouped_students = defaultdict(lambda: defaultdict(list))
+    students = Profile.objects.all()
     for student in students:
         grouped_students[student.department][student.student_class].append(student)
+
+    # Loglama: grouped_students içeriğini kontrol et
+    print(grouped_students)
 
     if request.method == 'POST':
         selected_students = request.POST.getlist('students')
