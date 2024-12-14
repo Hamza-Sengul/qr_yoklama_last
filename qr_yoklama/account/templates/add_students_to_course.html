@@ -57,11 +57,19 @@
                                 <td>{{ student.user.first_name }} {{ student.user.last_name }}</td>
                                 <td>{{ student.student_no }}</td>
                                 <td>
-                                    <input class="form-check-input" type="checkbox" name="students" value="{{ student.id }}">
+                                    <input class="form-check-input class-checkbox" type="checkbox" name="students" value="{{ student.id }}" data-class="{{ student_class }}" data-department="{{ department }}">
                                 </td>
                             </tr>
                             <tr>
                                 {% endfor %}
+                                <tr>
+                                    <td colspan="3" class="text-end">
+                                        <!-- Tümünü Seç Butonu -->
+                                        <button type="button" class="btn btn-link select-all-class" data-class="{{ student_class }}" data-department="{{ department }}">
+                                            Tümünü Seç
+                                        </button>
+                                    </td>
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -70,10 +78,26 @@
             {% else %}
                 <p class="text-center">Hiç öğrenci bulunamadı.</p>
             {% endif %}
-            <button type="submit" class="btn btn-primary mt-3">Öğrenci Ekle</button>
+            <button type="submit" class="btn btn-success mt-3 w-100">Seçili Öğrencileri Ekle</button>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const selectAllButtons = document.querySelectorAll('.select-all-class');
+
+        selectAllButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const studentClass = button.getAttribute('data-class');
+                const department = button.getAttribute('data-department');
+
+                // Aynı sınıfa ve bölüme ait tüm checkbox'ları işaretle
+                const checkboxes = document.querySelectorAll(`input.class-checkbox[data-class="${studentClass}"][data-department="${department}"]`);
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            });
+        });
+    </script>
 </body>
 </html>
