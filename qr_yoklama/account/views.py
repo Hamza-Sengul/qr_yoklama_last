@@ -341,10 +341,11 @@ def create_qr_code(request):
     QR kod oluşturma işlemi.
     """
     if request.method == 'POST':
+        # Formdan gelen verileri alın
         course_name = request.POST.get('course_name')
         course_code = request.POST.get('course_code')
         week = request.POST.get('week')
-        valid_minutes = request.POST.get('valid_minutes', 3)
+        valid_minutes = request.POST.get('valid_minutes', 3)  # Varsayılan süre: 3 dakika
 
         # Eksik bilgi kontrolü
         if not all([course_name, course_code, week]):
@@ -352,10 +353,10 @@ def create_qr_code(request):
             return redirect('create_qr_code')
 
         try:
-            # Geçerlilik süresi hesaplama
+            # QR kodun geçerlilik süresini hesapla
             valid_until = now() + timedelta(minutes=int(valid_minutes))
 
-            # QR kod oluşturma
+            # QR kod modelini oluştur
             qr_code = QRCode.objects.create(
                 course_name=course_name,
                 course_code=course_code,
@@ -364,15 +365,17 @@ def create_qr_code(request):
                 generated_by=request.user
             )
 
-            # QR kod detay sayfasına yönlendir
+            # Kullanıcıyı QR kod detay sayfasına yönlendir
             return redirect('qr_code_detail', qr_code_id=qr_code.id)
 
         except Exception as e:
+            # Hata mesajını kullanıcıya göster
             messages.error(request, f'QR kod oluşturulurken bir hata oluştu: {e}')
             return redirect('create_qr_code')
 
-    # GET isteği durumunda formu render et
+    # Eğer GET isteği yapılmışsa, QR kod oluşturma formunu render et
     return render(request, 'create_qr_code.html')
+
 
 
 
