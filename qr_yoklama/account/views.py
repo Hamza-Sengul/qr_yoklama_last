@@ -22,6 +22,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 import os
 from io import BytesIO
+from django.db import models
 
 
 def handle_attendance_after_login(request, qr_code):
