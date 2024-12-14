@@ -695,22 +695,19 @@ def custom_password_reset(request):
 
 
 
-@login_required
 def validate_qr_and_redirect(request, qr_code_id):
-    """
-    QR kodu doğrulayıp kullanıcıyı yönlendirir.
-    """
     try:
         qr_code = QRCode.objects.get(id=qr_code_id)
-
-        # Kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
+        
+        # Eğer kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
         if not request.user.is_authenticated:
-            request.session['qr_code_id'] = qr_code_id  # QR kod bilgisini sakla
-            return redirect('student_login')
+            # Giriş sonrası yoklama kaydını oluşturmak için next parametresini ayarlayın
+            request.session['qr_code_id'] = qr_code_id
+            return redirect('student_login')  # Giriş sayfasına yönlendir
 
-        # Kullanıcı giriş yapmışsa yoklamayı kaydet
+        # Kullanıcı giriş yapmışsa yoklama kaydını oluştur
         return handle_attendance_after_login(request, qr_code)
-
+    
     except QRCode.DoesNotExist:
         return render(request, 'invalid_qr.html', status=400)
 
