@@ -23,13 +23,30 @@ from reportlab.lib import colors
 import os
 from io import BytesIO
 
+
+def handle_attendance_after_login(request, qr_code):
+    try:
+        course = Course.objects.get(name=qr_code.course_name, code=qr_code.course_code)
+        week = qr_code.week
+        profile = Profile.objects.get(user=request.user)
+
+        # AttendanceStatus güncelle veya oluştur
+        attendance_status, created = AttendanceStatus.objects.get_or_create(
+            course=course,
+            week=week,
+            student=profile
+        )
+        attendance_status.is_present = True
+        attendance_status.save()
+
+    except Exception as e:
+        print(f"Hata: {e}")
+
+
 def home(request):
     return render(request, 'home.html')
 
 def student_login(request):
-    """
-    Öğrenci giriş işlemleri.
-    """
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
@@ -38,10 +55,20 @@ def student_login(request):
         user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
+            
+            # QR Kod üzerinden giriş yapıldıysa yoklama işlemini işleme al
+            qr_code_id = request.session.pop('qr_code_id', None)
+            if qr_code_id:
+                try:
+                    qr_code = QRCode.objects.get(id=qr_code_id)
+                    handle_attendance_after_login(request, qr_code)
+                    messages.success(request, 'Yoklama başarıyla alındı!')
+                except QRCode.DoesNotExist:
+                    messages.error(request, 'Geçersiz QR kod.')
+            
             return redirect('student_dashboard')  # Öğrenci paneline yönlendir
         else:
             messages.error(request, 'E-posta veya şifre hatalı!')
-
     return render(request, 'student_login.html')
 
 def student_register(request):
@@ -310,20 +337,17 @@ def course_students(request, course_id):
 
 @login_required
 def create_qr_code(request):
-    """
-    QR Kod oluşturma işlemi.
-    """
     if request.method == 'POST':
         course_name = request.POST.get('course_name')
         course_code = request.POST.get('course_code')
         week = request.POST.get('week')
-        valid_minutes = request.POST.get('valid_minutes', 3)  # Varsayılan süre 3 dakika
+        valid_minutes = request.POST.get('valid_minutes', 3)
 
         if not all([course_name, course_code, week]):
             messages.error(request, 'Lütfen tüm alanları doldurun!')
             return redirect('create_qr_code')
 
-        valid_until = now() + timedelta(minutes=int(valid_minutes))  # Geçerlilik süresi hesaplama
+        valid_until = now() + timedelta(minutes=int(valid_minutes))
 
         qr_code = QRCode.objects.create(
             course_name=course_name,
@@ -333,23 +357,28 @@ def create_qr_code(request):
             generated_by=request.user
         )
 
-        # Detay sayfasına yönlendir
-        return redirect('qr_code_detail', qr_code_id=qr_code.id)
+        # QR kod içeriği oluşturuluyor
+        qr_content = qr_code.get_qr_content()
+        qr_image = qrcode.make(qr_content)
+        buffer = io.BytesIO()
+        qr_image.save(buffer)
+        buffer.seek(0)
 
-    return render(request, 'create_qr_code.html')
+        return HttpResponse(buffer, content_type='image/png')
 
 
-@login_required
-def validate_qr_code(request, qr_code_id):
-    """
-    QR Kod geçerlilik kontrolü.
-    """
-    qr_code = QRCode.objects.get(id=qr_code_id)
-    if now() > qr_code.valid_until:
-        qr_code.is_expired = True
-        qr_code.save()
-        return HttpResponse("Bu QR kodun süresi dolmuştur.", status=400)
-    return HttpResponse("QR kod geçerli.", status=200)
+
+# def validate_qr_code(request, qr_code_id):
+#     """
+#     Bu fonksiyon kaldırılabilir.
+#     """
+#     qr_code = QRCode.objects.get(id=qr_code_id)
+#     if now() > qr_code.valid_until:
+#         qr_code.is_expired = True
+#         qr_code.save()
+#         return HttpResponse("Bu QR kodun süresi dolmuştur.", status=400)
+#     return HttpResponse("QR kod geçerli.", status=200)
+
 
 import json
 
@@ -601,7 +630,7 @@ def custom_password_reset(request):
             # E-posta içeriğini oluştur
             subject = 'Şifre Sıfırlama Talebi'
             try:
-                html_content = render_to_string('emails/password_reset_email.html', {
+                html_content = render_to_string('password_reset_email.html', {
                     'protocol': protocol,
                     'domain': domain,
                     'uid': uid,
@@ -641,3 +670,19 @@ def custom_password_reset(request):
     return render(request, 'password_reset.html')
 
 
+
+def validate_qr_and_redirect(request, qr_code_id):
+    try:
+        qr_code = QRCode.objects.get(id=qr_code_id)
+        
+        # Eğer kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
+        if not request.user.is_authenticated:
+            # Giriş sonrası yoklama kaydını oluşturmak için next parametresini ayarlayın
+            request.session['qr_code_id'] = qr_code_id
+            return redirect('student_login')  # Giriş sayfasına yönlendir
+
+        # Kullanıcı giriş yapmışsa yoklama kaydını oluştur
+        return handle_attendance_after_login(request, qr_code)
+    
+    except QRCode.DoesNotExist:
+        return render(request, 'invalid_qr.html', status=400)
