@@ -18,7 +18,7 @@ urlpatterns = [
     path('profile/settings/', views.profile_settings, name='profile_settings'),
     path('courses/<int:course_id>/students/', views.course_students, name='course_students'),
     path('qr-code/create/', views.create_qr_code, name='create_qr_code'),
-    path('qr-code/validate/<int:qr_code_id>/', views.validate_qr_code, name='validate_qr_code'),
+    #path('qr-code/validate/<int:qr_code_id>/', views.validate_qr_code, name='validate_qr_code'),
     path('scan-qr-code/', views.scan_qr_code, name='scan_qr_code'),
     path('dashboard/attendance/', views.attendance_overview, name='attendance_overview'),
     path('dashboard/attendance/<str:course_name>/<int:week>/', views.attendance_details, name='attendance_details'),
@@ -32,4 +32,5 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_complete.html'), name='password_reset_complete'),
     path('password-reset/', views.custom_password_reset, name='password_reset'),
+    path('validate-qr/<int:qr_code_id>/', views.validate_qr_and_redirect, name='validate_qr_and_redirect'),
 ]
