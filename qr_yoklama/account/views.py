@@ -314,19 +314,18 @@ def course_list(request):
 
 from collections import defaultdict
 
-from collections import defaultdict
-
 @login_required
 def add_students_to_course(request, course_id):
     """
     Ders için öğrenci ekleme işlemi.
     """
-    # İlgili dersi al
     course = Course.objects.get(id=course_id, created_by=request.user)
 
-    # Öğrencileri gruplandır
-    grouped_students = defaultdict(lambda: defaultdict(list))
+    # Öğrenci verilerini kontrol etmek için ekleyin
     students = Profile.objects.all()
+    print(students)  # Öğrenci verilerini loglayın
+
+    grouped_students = defaultdict(lambda: defaultdict(list))
     for student in students:
         grouped_students[student.department][student.student_class].append(student)
 
@@ -339,11 +338,11 @@ def add_students_to_course(request, course_id):
         messages.success(request, 'Öğrenciler başarıyla eklendi!')
         return redirect('course_list')
 
-    # Şablona gruplandırılmış veriyi gönder
     return render(request, 'add_students_to_course.html', {
         'course': course,
         'grouped_students': grouped_students
     })
+
 
 
 @login_required
