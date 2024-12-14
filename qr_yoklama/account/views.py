@@ -597,8 +597,8 @@ def qr_code_detail(request, qr_code_id):
     return render(request, 'qr_code_detail.html', {'qr_code': qr_code})
 
 def qr_code_image(request, qr_code_id):
-    qr_code = QRCode.objects.get(id=qr_code_id)
-    qr_content = f"{qr_code.course_name},{qr_code.course_code},{qr_code.week}"
+    qr_code = get_object_or_404(QRCode, id=qr_code_id)
+    qr_content = qr_code.get_qr_content()  # Dinamik URL içeriği alınıyor
 
     qr_image = qrcode.make(qr_content)
     buffer = io.BytesIO()
