@@ -1,25 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Kod Detayı</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Kod Detayı</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts: Poppins -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,500,700&display=swap">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      margin: 0;
+      padding: 0;
+    }
+    .card-glass {
+      background: rgba(255, 255, 255, 0.7);
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px 0 rgba(31,38,135,0.37);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+    }
+    h1, h3, p {
+      color: #333;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    img {
+      max-width: 200px;
+      margin: 20px 0;
+    }
+    .btn-custom {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    .btn-custom:hover {
+      transform: translateY(-2px);
+      opacity: 0.95;
+    }
+  </style>
 </head>
 <body>
-    <div class="container my-5">
-        <h1 class="text-center mb-4">QR Kod Detayı</h1>
-        <div class="text-center">
-            <h3>{{ qr_code.course_name }}</h3>
-            <p>Ders Kodu: {{ qr_code.course_code }}</p>
-            <p>Hafta: {{ qr_code.week }}</p>
-            <p>Geçerlilik Süresi: {{ qr_code.valid_until|date:"d/m/Y H:i" }}</p>
-            <img src="{% url 'qr_code_image' qr_code.id %}" alt="QR Kod">
-        </div>
-        <div class="d-grid mt-4">
-            <a href="{% url 'finalize_attendance' qr_code.id %}" class="btn btn-danger">Yoklamayı Sonlandır</a>
-        </div>
+  <div class="container my-5">
+    <div class="card-glass text-center">
+      <h1>QR Kod Detayı</h1>
+      <h3>{{ qr_code.course_name }}</h3>
+      <p>Ders Kodu: {{ qr_code.course_code }}</p>
+      <p>Hafta: {{ qr_code.week }}</p>
+      <p>Geçerlilik Süresi: {{ qr_code.valid_until|date:"d/m/Y H:i" }}</p>
+      <img src="{% url 'qr_code_image' qr_code.id %}" alt="QR Kod">
+      <div class="d-grid mt-4">
+        <a href="{% url 'finalize_attendance' qr_code.id %}" class="btn btn-custom">Yoklamayı Sonlandır</a>
+      </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
