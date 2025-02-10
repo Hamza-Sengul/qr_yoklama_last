@@ -1,69 +1,147 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ana Sayfa</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .card {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ana Sayfa</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Sayfanın genel stili */
+    body {
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .card {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1; /* Ana içerik, overlay'in altında kalması için düşük bir z-index */
+    }
+
+    /* Overlay (Siyah Katman) */
+    #intro-overlay {
+      position: fixed;
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100vh;
+      background-color: black;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999; /* Kartın üstünde kalması için yüksek bir değer */
+      font-size: 2rem;
+      text-align: center;
+      overflow: hidden; /* Güvenlik amaçlı */
+    }
+
+    /* Metin animasyonları */
+    .intro-text {
+      opacity: 0; 
+      animation: fadeSlideInOut 3s ease-in-out forwards,
+                 glowPulse 3s ease-in-out;
+    }
+
+    /* Metinler arasındaki gecikme (3.5s arayla başlayacak) */
+    .intro-text:nth-child(1) { animation-delay: 0s;   }
+    .intro-text:nth-child(2) { animation-delay: 3.5s; }
+    .intro-text:nth-child(3) { animation-delay: 7s;   }
+    .intro-text:nth-child(4) { animation-delay: 10.5s;}
+    .intro-text:nth-child(5) { animation-delay: 14s;  }
+    .intro-text:nth-child(6) { animation-delay: 17.5s;}
+
+    /* Fade + Kaydırma + Scale ile İçeri/Dışarı Geçiş (toplam 3 saniye) */
+    @keyframes fadeSlideInOut {
+      0% {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+      }
+      10% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      40% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        opacity: 0;
+        transform: translateY(-20px) scale(1.1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-20px) scale(1.1);
+      }
+    }
+
+    /* Hafif “ışık parlaması” (glow) efekti */
+    @keyframes glowPulse {
+      0% {
+        text-shadow: 0 0 3px #fff, 
+                     0 0 10px #f0f,
+                     0 0 20px #f0f,
+                     0 0 40px #f0f;
+      }
+      50% {
+        text-shadow: 0 0 3px #fff,
+                     0 0 10px #0ff,
+                     0 0 20px #0ff,
+                     0 0 40px #0ff;
+      }
+      100% {
+        text-shadow: 0 0 3px #fff,
+                     0 0 10px #f0f,
+                     0 0 20px #f0f,
+                     0 0 40px #f0f;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="card text-center">
-        <h1 class="mb-4">QR Yoklama Sistemi</h1>
-        <div class="d-grid gap-3">
-            <a href="{% url 'student_login' %}" class="btn btn-primary btn-lg">Öğrenci Girişi</a>
-            <a href="{% url 'academician_login' %}" class="btn btn-secondary btn-lg">Akademisyen Girişi</a>
-        </div>
-    </div>
 
-    <!-- Modal -->
-    <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="updateModalLabel">Güncelleme Notları - Sürüm 1.0.8</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <ul>
-                        <li>Şifre sıfırlama sistemi düzenlendi ve e-posta doğrulama süreci iyileştirildi.</li>
-                        <li>Öğrencilerin farklı cihazlardan yoklama alamaması için token bilgisi e postalar ile eşleştrildi.</li>
-                        <li>Yeni şifre sıfırlama e-posta şablonları oluşturuldu ve güncellendi.</li>
-                        <li>Öğrenci paneline yoklamalarını görüntüleme ve kalan devamsızlık haklarını kontrol etme özelliği eklendi.</li>
-                        <li>Öğrenci paneline, son okutulan QR kodun log kaydını görüntüleme özelliği eklendi.</li>
-                        <li>Güncelleme notları için modal (popup) eklendi.</li>
-                        <li>Sistem genelinde küçük hatalar düzeltildi ve performans iyileştirmeleri yapıldı.</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-                </div>
-            </div>
-        </div>
-    </div>
+  <!-- Overlay: Sırayla animasyonlu metinler -->
+  <div id="intro-overlay">
+    <div class="intro-text">QR Yoklama Sistemine Hoş Geldiniz!</div>
+    <div class="intro-text">Tarsus Üniversitesi’nde Bir İlk!</div>
+    <div class="intro-text">Yönetim Bilişim Sistemleri Öğrencilerinin Gururla Hazırladığı...</div>
+    <div class="intro-text">Kolay, Hızlı, Güvenilir...</div>
+    <div class="intro-text">Artık Yoklama İçin Sadece QR Kod Yeterli!</div>
+    <div class="intro-text">Bu Hafta Yepyeni Özelliklerle Güncelleniyoruz... Hazır mısınız?</div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Sayfa yüklendiğinde modalı aç
-        document.addEventListener('DOMContentLoaded', function () {
-            var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
-            updateModal.show();
-        });
-    </script>
+  <!-- Asıl içerik (kart) -->
+  <div class="card text-center">
+    <h1 class="mb-4">QR Yoklama Sistemi</h1>
+    <div class="d-grid gap-3">
+      <a href="{% url 'student_login' %}" class="btn btn-primary btn-lg">Öğrenci Girişi</a>
+      <a href="{% url 'academician_login' %}" class="btn btn-secondary btn-lg">Akademisyen Girişi</a>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    /*
+      - Toplam 6 satır var, son satır 17.5s’de başlayıp 20.5s’de bitiyor.
+      - Biraz fazladan pay bırakarak 22. saniyede overlay'i gizliyoruz.
+    */
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function() {
+        var overlay = document.getElementById('intro-overlay');
+        overlay.style.display = 'none';
+      }, 22000);
+    });
+  </script>
+
 </body>
 </html>
