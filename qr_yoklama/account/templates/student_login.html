@@ -1,39 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Öğrenci Girişi</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Öğrenci Girişi</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts: Poppins -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,500,700&display=swap">
+  <style>
+    /* Genel Gövde Ayarları */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 20px;
+    }
+    /* Kart Stil Ayarları */
+    .card-custom {
+      background: #fff;
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+    }
+    /* Başlık Stil Ayarları */
+    h2 {
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    /* Form Label Ayarları */
+    .form-label {
+      font-weight: 500;
+      color: #555;
+    }
+    /* Input Alanları */
+    .form-control {
+      border-radius: 10px;
+      box-shadow: none;
+    }
+    /* Buton Stil Ayarları */
+    .btn-custom {
+      padding: 12px;
+      font-size: 1.1rem;
+      border-radius: 10px;
+      background-color: #3b82f6; /* Canlı mavi */
+      border: none;
+      color: #fff;
+      transition: opacity 0.3s ease;
+    }
+    .btn-custom:hover {
+      opacity: 0.9;
+    }
+    /* Link Stil Ayarları */
+    a {
+      color: #3b82f6;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-    <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-        <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
-            <h2 class="text-center mb-4">Öğrenci Girişi</h2>
-            <form method="post">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="email" class="form-label">E-posta:</label>
-                    <input type="email" id="email" name="email" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Şifre:</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Giriş Yap</button>
-                </div>
-            </form>
-            <p class="mt-3 text-center">
-                Hesabınız yok mu? <a href="{% url 'student_register' %}">Kayıt Ol</a>
-            </p>
-            <p class="mt-3 text-center">
-                <a href="{% url 'password_reset' %}">Şifremi Unuttum</a>
-            </p>
-            
-        </div>
-    </div>
+  <div class="card-custom">
+    <h2 class="text-center mb-4">Öğrenci Girişi</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="email" class="form-label">E-posta:</label>
+        <input type="email" id="email" name="email" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Şifre:</label>
+        <input type="password" id="password" name="password" class="form-control" required>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-custom">Giriş Yap</button>
+      </div>
+    </form>
+    <p class="mt-3 text-center">
+      Hesabınız yok mu? <a href="{% url 'student_register' %}">Kayıt Ol</a>
+    </p>
+    <p class="mt-3 text-center">
+      <a href="{% url 'password_reset' %}">Şifremi Unuttum</a>
+    </p>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
